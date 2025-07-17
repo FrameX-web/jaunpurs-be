@@ -18,10 +18,8 @@ app.use(cors());
 app.use(express.json());
 
 // Import models
-import Contact from './models/Contact.js';
 import Enquiry from './models/Enquiry.js';
 
-console.log('Contact model loaded:', !!Contact);
 console.log('Enquiry model loaded:', !!Enquiry);
 
 // Connect to MongoDB Atlas
@@ -29,8 +27,8 @@ mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
     console.log('Connected to MongoDB Atlas');
     // Optionally, check if models are compiled
-    if (!Contact || !Enquiry) {
-      console.error('Model import failed: Contact or Enquiry is undefined');
+    if (!Enquiry) {
+      console.error('Model import failed: Enquiry is undefined');
     }
   })
   .catch((err) => console.error('MongoDB connection error:', err));
@@ -45,22 +43,11 @@ app.get('/', (req, res) => {
   res.send('Backend server is running and connected to MongoDB!');
 });
 
-// Contact Form Route
-app.post('/api/contact', async (req, res) => {
-  try {
-    const contact = new Contact(req.body);
-    await contact.save();
-    res.status(201).json({ message: 'Contact form submitted successfully' });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to submit contact form' });
-  }
-});
-
 // Enquiry Form Route (JSON only, no file upload)
 app.post('/api/enquiry', async (req, res) => {
   try {
-    const { name, phone, email, country, message } = req.body;
-    const enquiryData = { name, phone, email, country, message };
+    const { name, phone, message } = req.body;
+    const enquiryData = { name, phone, message };
     const enquiry = new Enquiry(enquiryData);
     await enquiry.save();
     return res.status(201).json({ message: 'Enquiry form submitted successfully' });
@@ -69,31 +56,9 @@ app.post('/api/enquiry', async (req, res) => {
   }
 });
 
-// Admin: Get all contact form data
-app.get('/api/admin/contacts', async (req, res) => {
-  try {
-    if (!Contact) {
-      throw new Error('Contact model is not defined');
-    }
-    const contacts = await Contact.find().sort({ createdAt: -1 });
-    res.json(contacts);
-  } catch (err) {
-    console.error('--- ERROR FETCHING CONTACTS ---');
-    console.error('Name:', err.name);
-    console.error('Message:', err.message);
-    console.error('Stack:', err.stack);
-    if (err.errors) console.error('Errors:', err.errors);
-    if (err.reason) console.error('Reason:', err.reason);
-    res.status(500).json([]);
-  }
-});
-
 // Admin: Get all enquiry data (without file buffer)
 app.get('/api/admin/enquiries', async (req, res) => {
   try {
-    if (!Enquiry) {
-      throw new Error('Enquiry model is not defined');
-    }
     const enquiries = await Enquiry.find().sort({ createdAt: -1 });
     res.json(enquiries);
   } catch (err) {
