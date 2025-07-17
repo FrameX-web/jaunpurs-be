@@ -6,10 +6,10 @@ const enquirySchema = new mongoose.Schema({
   email: String,
   country: String,
   message: String,
-  fileName: String, // uploaded file name
-  file: { type: Buffer, select: false },     // uploaded file data as Buffer (binary)
-  fileType: String, // uploaded file mimetype
   createdAt: { type: Date, default: Date.now }
+});
+
+export default mongoose.model('Enquiry', enquirySchema);
 });
 
 export default mongoose.model('Enquiry', enquirySchema);

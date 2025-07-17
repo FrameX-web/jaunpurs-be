@@ -4,7 +4,6 @@ dotenv.config();
 import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
-import multer from 'multer';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -46,12 +45,6 @@ app.get('/', (req, res) => {
   res.send('Backend server is running and connected to MongoDB!');
 });
 
-// Multer setup for 2MB file limit, store file in memory
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 2 * 1024 * 1024 } // 2MB
-});
-
 // Contact Form Route
 app.post('/api/contact', async (req, res) => {
   try {
@@ -63,27 +56,15 @@ app.post('/api/contact', async (req, res) => {
   }
 });
 
-// Enquiry Form Route (with file upload)
-app.post('/api/enquiry', upload.single('file'), async (req, res) => {
+// Enquiry Form Route (JSON only, no file upload)
+app.post('/api/enquiry', async (req, res) => {
   try {
     const { name, phone, email, country, message } = req.body;
-    const enquiryData = {
-      name,
-      phone,
-      email,
-      country,
-      message,
-      fileName: req.file ? req.file.originalname : undefined,
-      file: req.file ? req.file.buffer : undefined,
-      fileType: req.file ? req.file.mimetype : undefined
-    };
+    const enquiryData = { name, phone, email, country, message };
     const enquiry = new Enquiry(enquiryData);
     await enquiry.save();
-    res.status(201).json({ message: 'Enquiry form submitted successfully' });
+    return res.status(201).json({ message: 'Enquiry form submitted successfully' });
   } catch (err) {
-    if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ error: 'File too large. Max 2MB allowed.' });
-    }
     res.status(500).json({ error: 'Failed to submit enquiry form' });
   }
 });
@@ -113,7 +94,7 @@ app.get('/api/admin/enquiries', async (req, res) => {
     if (!Enquiry) {
       throw new Error('Enquiry model is not defined');
     }
-    const enquiries = await Enquiry.find().sort({ createdAt: -1 }).select('-file');
+    const enquiries = await Enquiry.find().sort({ createdAt: -1 });
     res.json(enquiries);
   } catch (err) {
     console.error('--- ERROR FETCHING ENQUIRIES ---');
@@ -123,30 +104,6 @@ app.get('/api/admin/enquiries', async (req, res) => {
     if (err.errors) console.error('Errors:', err.errors);
     if (err.reason) console.error('Reason:', err.reason);
     res.status(500).json([]);
-  }
-});
-
-// Admin: Serve enquiry image by ID
-app.get('/api/admin/enquiry/image/:id', async (req, res) => {
-  try {
-    const enquiry = await Enquiry.findById(req.params.id).select('file fileType');
-    if (!enquiry) {
-      console.error(`Enquiry entry not found for ID: ${req.params.id}`);
-      return res.status(404).send('Image not found');
-    }
-    if (!enquiry.file) {
-      console.error(`No file buffer found for enquiry ID: ${req.params.id}`);
-      return res.status(404).send('Image not found');
-    }
-    res.set('Content-Type', enquiry.fileType || 'application/octet-stream');
-    res.send(enquiry.file);
-  } catch (err) {
-    console.error('--- ERROR FETCHING ENQUIRY IMAGE ---');
-    console.error('ID:', req.params.id);
-    console.error('Name:', err.name);
-    console.error('Message:', err.message);
-    console.error('Stack:', err.stack);
-    res.status(404).send('Image not found');
   }
 });
 
