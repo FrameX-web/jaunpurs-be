@@ -19,6 +19,8 @@ app.use(express.json());
 
 // Import models
 import Enquiry from './models/Enquiry.js';
+// Add Feedback model import
+import Feedback from './models/Feedback.js';
 
 console.log('Enquiry model loaded:', !!Enquiry);
 
@@ -56,6 +58,35 @@ app.post('/api/enquiry', async (req, res) => {
   }
 });
 
+// Feedback Form Route
+app.post('/api/feedback', async (req, res) => {
+  try {
+    const {
+      overallExperience,
+      whatDidYouTry,
+      comments,
+      foodQuality,
+      serviceStaff,
+      whatsappUpdates,
+      whatsappNumber
+    } = req.body;
+    const feedbackData = {
+      overallExperience,
+      whatDidYouTry,
+      comments,
+      foodQuality,
+      serviceStaff,
+      whatsappUpdates,
+      whatsappNumber
+    };
+    const feedback = new Feedback(feedbackData);
+    await feedback.save();
+    return res.status(201).json({ message: 'Feedback submitted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to submit feedback' });
+  }
+});
+
 // Admin: Get all enquiry data (without file buffer)
 app.get('/api/admin/enquiries', async (req, res) => {
   try {
@@ -68,6 +99,16 @@ app.get('/api/admin/enquiries', async (req, res) => {
     console.error('Stack:', err.stack);
     if (err.errors) console.error('Errors:', err.errors);
     if (err.reason) console.error('Reason:', err.reason);
+    res.status(500).json([]);
+  }
+});
+
+// Admin: Get all feedback data
+app.get('/api/admin/feedbacks', async (req, res) => {
+  try {
+    const feedbacks = await Feedback.find().sort({ createdAt: -1 });
+    res.json(feedbacks);
+  } catch (err) {
     res.status(500).json([]);
   }
 });
