@@ -61,6 +61,9 @@ app.post('/api/enquiry', async (req, res) => {
 // Feedback Form Route
 app.post('/api/feedback', async (req, res) => {
   try {
+    // Log incoming request for debugging
+    console.log('Received feedback:', req.body);
+
     const {
       overallExperience,
       whatDidYouTry,
@@ -70,6 +73,21 @@ app.post('/api/feedback', async (req, res) => {
       whatsappUpdates,
       whatsappNumber
     } = req.body;
+
+    // Validate required fields
+    if (
+      !overallExperience ||
+      !Array.isArray(whatDidYouTry) || whatDidYouTry.length === 0 ||
+      !foodQuality ||
+      !serviceStaff ||
+      !whatsappUpdates ||
+      (whatsappUpdates === "Yes" && (!whatsappNumber || !/^\d{10}$/.test(whatsappNumber)))
+    ) {
+      return res.status(400).json({
+        error: "Missing or invalid required fields. Please fill all required fields correctly."
+      });
+    }
+
     const feedbackData = {
       overallExperience,
       whatDidYouTry,
@@ -83,6 +101,11 @@ app.post('/api/feedback', async (req, res) => {
     await feedback.save();
     return res.status(201).json({ message: 'Feedback submitted successfully' });
   } catch (err) {
+    console.error('Feedback submission error:', err);
+    // If validation error, send details
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ error: err.message });
+    }
     res.status(500).json({ error: 'Failed to submit feedback' });
   }
 });
