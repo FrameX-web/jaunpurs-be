@@ -65,6 +65,8 @@ app.post('/api/feedback', async (req, res) => {
     console.log('Received feedback:', req.body);
 
     const {
+      name,
+      mobile,
       overallExperience,
       whatDidYouTry,
       comments,
@@ -74,8 +76,10 @@ app.post('/api/feedback', async (req, res) => {
       whatsappNumber
     } = req.body;
 
-    // Validate required fields
+    // Validate required fields (including name and mobile)
     if (
+      !name ||
+      !mobile ||
       !overallExperience ||
       !Array.isArray(whatDidYouTry) || whatDidYouTry.length === 0 ||
       !foodQuality ||
@@ -89,6 +93,8 @@ app.post('/api/feedback', async (req, res) => {
     }
 
     const feedbackData = {
+      name,
+      mobile,
       overallExperience,
       whatDidYouTry,
       comments,
