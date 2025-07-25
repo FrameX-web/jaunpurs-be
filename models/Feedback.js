@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 
 const FeedbackSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  mobile: { type: String, required: true },
   overallExperience: { type: String, required: true },
   whatDidYouTry: [{ type: String, required: true }],
   comments: { type: String, default: '' },
